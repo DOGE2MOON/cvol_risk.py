@@ -29,5 +29,3 @@ def CVOL_Risk(expected_value):
 	output.at["USD", "Expected Risk"] = Expected_Vault_Risk
 	output.at["USD", "Max Risk"] = Max_Vault_Risk
 	return output
-
-CVOL_Risk(120).to_csv('CVOL Risk.csv', encoding='utf-8')
