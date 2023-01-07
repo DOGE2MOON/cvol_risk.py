@@ -5,11 +5,9 @@ import sys
 import pandas as pd
 from pycoingecko import CoinGeckoAPI
 
-output = pd.DataFrame()
-
-def CVOL_Risk(expected_value, address):
+def CVOL_Risk(expected_value, address, user_data):
+	output = pd.DataFrame()
 	expected_value = float(expected_value)
-	recipient = Web3.toChecksumAddress(address)
 	cg = CoinGeckoAPI()
 	web3 = Web3(Web3.HTTPProvider('https://arb1.arbitrum.io/rpc'))
 
@@ -37,19 +35,21 @@ def CVOL_Risk(expected_value, address):
 	T_CVOL_LP_Supply = T_CVOL_LP_Contract.functions.totalSupply().call() / 10**18
 	Theta_Vault_Ratio = T_CVOL_LP_USDC_Balance / T_CVOL_LP_Supply
 
-	User_T_CVOL_LP_Balance = T_CVOL_LP_Contract.functions.balanceOf(address).call() / 10**18
-	User_USDC_Balance = User_T_CVOL_LP_Balance * Theta_Vault_Ratio
-	User_Pool_Ownership = User_USDC_Balance / T_CVOL_LP_USDC_Balance
-	
-	Max_User_Risk = User_Pool_Ownership * Max_Vault_Risk
-	Expected_User_Risk = User_Pool_Ownership * Expected_Vault_Risk
+	if user_data == True:
+		address = Web3.toChecksumAddress(address)
+		User_T_CVOL_LP_Balance = T_CVOL_LP_Contract.functions.balanceOf(address).call() / 10**18
+		User_USDC_Balance = User_T_CVOL_LP_Balance * Theta_Vault_Ratio
+		User_Pool_Ownership = User_USDC_Balance / T_CVOL_LP_USDC_Balance
+		Max_User_Risk = User_Pool_Ownership * Max_Vault_Risk
+		Expected_User_Risk = User_Pool_Ownership * Expected_Vault_Risk
+
+		output.at["User USDC Balance", "USD"] = round(User_USDC_Balance,2)
+		output.at["Max User Risk", "USD"] = round(Max_User_Risk,2)
+		output.at["Expected User Risk", "USD"] = round(Expected_User_Risk,2)
+
 
 	output.at["Vault USDC Holdings", "USD"] = round(T_CVOL_LP_USDC_Balance,2)
 	output.at["Max Vault Risk", "USD"] = round(Max_Vault_Risk,2)
 	output.at["Expected Vault Risk", "USD"] = round(Expected_Vault_Risk,2)
 	
-	output.at["User USDC Balance", "USD"] = round(User_USDC_Balance,2)
-	output.at["Max User Risk", "USD"] = round(Max_User_Risk,2)
-	output.at["Expected User Risk", "USD"] = round(Expected_User_Risk,2)
-
 	return output
